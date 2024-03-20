@@ -1,5 +1,5 @@
 "use client"
-import { Box, FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent, Button, TextField, Typography, List, ListItem, ListItemText, ThemeProvider, createTheme, withTheme } from "@mui/material";
+import { Box, FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent, Button, TextField, Typography, List, ListItem, ListItemText, ThemeProvider, createTheme, withTheme, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 
 import axios from "axios";
@@ -16,6 +16,7 @@ export default function Home() {
 	const [isLoadingNewNumber, setIsLoadingNewNumber] = useState(false);
 	const [isLoadingNewBet, setIsLoadingNewBet] = useState(false);
 	const [bets, setBets] = useState<{ name: string; cpf: string; numbers: number[]; }[]>([])
+	const [betNumbersOccurrences, setBetNumbersOccurrences] = useState<{ number: number}>({ number: 0})
 	const [winners, setWinners] = useState<{ name: string; cpf: string; numbers: number[]; }[]>([])
 	const [betEdition, setBetEdition] = useState<{ 
 		id_e: string,
@@ -107,6 +108,7 @@ export default function Home() {
 				setSelectedNumbers([]);
 				getBets();
 				setIsLoadingNewBet(false)
+				numberOccurrences()
 			})
 			.catch((error) => {
 				console.error(error);
@@ -163,6 +165,16 @@ export default function Home() {
 		axios.get<{ name: string; cpf: string; numbers: number[]; }[]>("http://localhost:3001/bet/read")
 			.then((response) => {
 				setBets(response.data);
+			})
+			.catch((error) => {
+				console.error(error);
+			});
+	}, []);
+	
+	const numberOccurrences = useCallback(() => {
+		axios.get("http://localhost:3001/bet/read/numbers")
+			.then((response) => {
+				setBetNumbersOccurrences(response.data);
 			})
 			.catch((error) => {
 				console.error(error);
@@ -244,6 +256,7 @@ export default function Home() {
 	useEffect(() => {
 		getBetEditions()
 		getBets()
+		numberOccurrences()
 	}, [])
 
 	useEffect(() => {
@@ -293,179 +306,200 @@ export default function Home() {
 					color: darkTheme.palette.text.primary,
 					minHeight: "100vh"
 				}}>
-			<Box sx={{ p: 2 }}>
-				<FormControl fullWidth>
-					<InputLabel>Edição</InputLabel>
-					<Select
-						id="edition"
-						value={BetEdition_id}
-						label="Edição"
-						onChange={selectEdition}
-					>
-						{betEditions.map((edition) => (
-							<MenuItem key={edition.id_e} value={edition.id_e}>{edition.name}</MenuItem>
-						))}
-					</Select>
-				</FormControl>
-			</Box>
-			{drawPhase && (
-				<Typography sx={{ p: 2 }} variant="body1">Fase de apostas encerrada</Typography>
-			)}
-			{bettingPhase && (
-				<Box>
 				<Box sx={{ p: 2 }}>
-				<Grid container spacing={2}>
-					{numbers.map((number) => (
-						<Grid item key={number}>
-							<Button
-								variant={selectedNumbers.includes(number) ? "contained" : "outlined"}
-								onClick={() => selectNumber(number)}
-								sx={{ backgroundColor: selectedNumbers.includes(number) ? darkTheme.palette.primary.main : "inherit", color: selectedNumbers.includes(number) ? "#fff" : "inherit" }}
-							>
-								{number}
-							</Button>
-						</Grid>
-					))}
-				</Grid>
-				</Box>
-			
-				<Box sx={{ p: 2 }}>
-					<Typography variant="body1">Números selecionados: {selectedNumbers.join(", ")}</Typography>
-
-					<Button variant="contained" onClick={randomBet} color="inherit">Surpresinha</Button>
-
-					<TextField
-						label="Nome do Apostador"
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						fullWidth
-						sx={{ mt: 2, mb: 2 }}
-					/>
-					<TextField
-						label="CPF"
-						value={cpf}
-						onChange={setCpf}
-						fullWidth
-						sx={{ mb: 2 }}
-						error={!isValidCpf(cpf)}
-						helperText={!isValidCpf(cpf) && "CPF inválido"}
-					/>
-					<Button variant="contained" 
-						onClick={sendBet} 
-						color="inherit"
-						disabled={
-							selectedNumbers.length !== 5 || 
-							!isValidCpf(cpf) ||
-							name == "" ||
-							isLoadingNewBet}
-							>
-							{isLoadingNewBet ? 'Registrando...' : 'Apostar'}
-					</Button>
-				</Box>
-				</Box>
-			)}
-			
-			
-			
-			<Box sx={{ p: 2 }}>
-
-				{sortNumbers && (
-					<Button
-					variant="contained"
-					onClick={() => {
-					  if (window.confirm("Tem certeza que deseja finalizar as apostas e executar o sorteio?")) {
-						runDraw();
-					  }
-					}}
-					color="inherit"
-				  >
-					Finalizar apostas e executar sorteio
-				  </Button>
-				)}
-				{extraSortNumber && (
-					<Button
-						variant="contained"
-						onClick={drawExtraNumber}
-						color="inherit"
-						disabled={isLoadingNewNumber}
+					<FormControl fullWidth>
+						<InputLabel>Edição</InputLabel>
+						<Select
+							id="edition"
+							value={BetEdition_id}
+							label="Edição"
+							onChange={selectEdition}
 						>
-						{isLoadingNewNumber ? 'Sorteando...' : 'Sortear Número Extra'}
-				  	</Button>
+							{betEditions.map((edition) => (
+								<MenuItem key={edition.id_e} value={edition.id_e}>{edition.name}</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
+				{drawPhase && (
+					<Typography sx={{ p: 2 }} variant="body1">Fase de apostas encerrada</Typography>
+				)}
+				{bettingPhase && (
+					<Box>
+					<Box sx={{ p: 2 }}>
+					<Grid container spacing={2}>
+						{numbers.map((number) => (
+							<Grid item key={number}>
+								<Button
+									variant={selectedNumbers.includes(number) ? "contained" : "outlined"}
+									onClick={() => selectNumber(number)}
+									sx={{ backgroundColor: selectedNumbers.includes(number) ? darkTheme.palette.primary.main : "inherit", color: selectedNumbers.includes(number) ? "#fff" : "inherit" }}
+								>
+									{number}
+								</Button>
+							</Grid>
+						))}
+					</Grid>
+					</Box>
+				
+					<Box sx={{ p: 2 }}>
+						<Typography variant="body1">Números selecionados: {selectedNumbers.join(", ")}</Typography>
+
+						<Button variant="contained" onClick={randomBet} color="inherit">Surpresinha</Button>
+
+						<TextField
+							label="Nome do Apostador"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							fullWidth
+							sx={{ mt: 2, mb: 2 }}
+						/>
+						<TextField
+							label="CPF"
+							value={cpf}
+							onChange={setCpf}
+							fullWidth
+							sx={{ mb: 2 }}
+							error={!isValidCpf(cpf)}
+							helperText={!isValidCpf(cpf) && "CPF inválido"}
+						/>
+						<Button variant="contained" 
+							onClick={sendBet} 
+							color="inherit"
+							disabled={
+								selectedNumbers.length !== 5 || 
+								!isValidCpf(cpf) ||
+								name == "" ||
+								isLoadingNewBet}
+								>
+								{isLoadingNewBet ? 'Registrando...' : 'Apostar'}
+						</Button>
+					</Box>
+					</Box>
 				)}
 				
-				<Typography variant="body1">Números sorteados: {drawnNumbers.join(", ")}</Typography>
-			</Box>
+				
+				
+				<Box sx={{ p: 2 }}>
 
-			<Box sx={{ p: 2 }}>
-				{winners.length <= 0 && drawnNumbers.length >= 30 &&(
-					<Typography variant="body1"> Não houve ganhadores </Typography>
-				)}
-			
-				{!(drawnNumbers.length >= 30 && winners.length <= 0) &&(
+					{sortNumbers && (
+						<Button
+						variant="contained"
+						onClick={() => {
+						if (window.confirm("Tem certeza que deseja finalizar as apostas e executar o sorteio?")) {
+							runDraw();
+						}
+						}}
+						color="inherit"
+					>
+						Finalizar apostas e executar sorteio
+					</Button>
+					)}
+					{extraSortNumber && (
+						<Button
+							variant="contained"
+							onClick={drawExtraNumber}
+							color="inherit"
+							disabled={isLoadingNewNumber}
+							>
+							{isLoadingNewNumber ? 'Sorteando...' : 'Sortear Número Extra'}
+						</Button>
+					)}
+					
+					<Typography variant="body1">Números sorteados: {drawnNumbers.join(", ")}</Typography>
+				</Box>
+
+				<Box sx={{ p: 2 }}>
+					{winners.length <= 0 && drawnNumbers.length >= 30 &&(
+						<Typography variant="body1"> Não houve ganhadores </Typography>
+					)}
+				
+					{!(drawnNumbers.length >= 30 && winners.length <= 0) &&(
+						<Box sx={{ width: "100%", bgcolor: "background.paper" }}>
+							<Typography variant="h6" gutterBottom component="div">
+								Lista de Ganhadores
+							</Typography>
+							<List>
+								{winners.map((bet, index) => (
+									<ListItem key={index}>
+										<ListItemText
+											primary={`Ganhador ${index + 1}`}
+											secondary={`Nome: ${bet.name}, CPF: ${bet.cpf}, Números: ${bet.numbers.join(", ")}`}
+										/>
+									</ListItem>
+								))}
+							</List>
+						</Box>
+					)}
+
+					{(winners.length > 0 && prizeValue == 0) && (
+						<Button
+							variant="contained"
+							onClick={holdAwards}
+							color="inherit"
+							>
+							Realizar premiação
+						</Button>
+					)}
+
+					{(prizeValue > 0) && (
+						<Typography variant="h6" gutterBottom component="div">
+							O valor da premiação para cada ganhador é de R$ {prizeValue}
+						</Typography>
+					)}
+					
+
+				</Box>
+
+				<Box sx={{ p: 2 }}>
 					<Box sx={{ width: "100%", bgcolor: "background.paper" }}>
 						<Typography variant="h6" gutterBottom component="div">
-							Lista de Ganhadores
+							Lista de Apostas
 						</Typography>
 						<List>
-							{winners.map((bet, index) => (
+							{bets.map((bet, index) => (
 								<ListItem key={index}>
 									<ListItemText
-										primary={`Ganhador ${index + 1}`}
+										primary={`Aposta ${index + 1}`}
 										secondary={`Nome: ${bet.name}, CPF: ${bet.cpf}, Números: ${bet.numbers.join(", ")}`}
 									/>
 								</ListItem>
 							))}
 						</List>
 					</Box>
-				)}
-
-				{(winners.length > 0 && prizeValue == 0) && (
-					<Button
-						variant="contained"
-						onClick={holdAwards}
-						color="inherit"
-						>
-						Realizar premiação
-				  	</Button>
-				)}
-
-				{(prizeValue > 0) && (
-					<Typography variant="h6" gutterBottom component="div">
-						O valor da premiação para cada ganhador é de R$ {prizeValue}
-					</Typography>
-				)}
-				
-
-			</Box>
-
-			<Box sx={{ p: 2 }}>
-				<Box sx={{ width: "100%", bgcolor: "background.paper" }}>
-					<Typography variant="h6" gutterBottom component="div">
-						Lista de Apostas
-					</Typography>
-					<List>
-						{bets.map((bet, index) => (
-							<ListItem key={index}>
-								<ListItemText
-									primary={`Aposta ${index + 1}`}
-									secondary={`Nome: ${bet.name}, CPF: ${bet.cpf}, Números: ${bet.numbers.join(", ")}`}
-								/>
-							</ListItem>
-						))}
-					</List>
 				</Box>
-			</Box>
-			<Button
-					variant="contained"
-					onClick={() => {
-					  if (window.confirm("Tem certeza que deseja reiniciar as apostas?")) {
-						newEdition();
-					  }
-					}}
-					color="inherit"
-				  >
-					Finalizar edição e reiniciar
-				  </Button>
+				<Box sx={{ p: 2 }}>
+					<Button
+							variant="contained"
+							onClick={() => {
+							if (window.confirm("Tem certeza que deseja reiniciar as apostas?")) {
+								newEdition();
+							}
+							}}
+							color="inherit"
+						>
+							Finalizar edição e reiniciar
+					</Button>
+				</Box>
+
+				<TableContainer component={Paper}>
+					<Table>
+						<TableHead>
+						<TableRow>
+							<TableCell>Número Sorteado</TableCell>
+							<TableCell>Quantidade</TableCell>
+						</TableRow>
+						</TableHead>
+						<TableBody>
+						{Object.entries(betNumbersOccurrences).map(([number, count]) => (
+							<TableRow key={number}>
+							<TableCell>{number}</TableCell>
+							<TableCell>{count}</TableCell>
+							</TableRow>
+						))}
+						</TableBody>
+					</Table>
+				</TableContainer>
 			</Box>
 		</ThemeProvider>
 	);

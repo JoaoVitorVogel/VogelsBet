@@ -36,6 +36,9 @@ readBetController.handle)
 router.get("/bet/read/winners",
 readBetController.searchWinners)
 
+router.get("/bet/read/numbers",
+readBetController.searchBetNumbers)
+
 
 router.post("/numbers/generate",
 generatedNumbers.handle)

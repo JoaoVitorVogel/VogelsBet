@@ -21,6 +21,15 @@ class ReadBetController {
 
       return response.status(201).json(winners)
     }
+
+    async searchBetNumbers(request: Request, response: Response): Promise<Response> {
+
+      const readBetUseCase = container.resolve(ReadBetUseCase);
+
+      const numbers = await readBetUseCase.getBetNumbers()
+
+      return response.status(201).json(numbers)
+    }
 }
 
 export { ReadBetController };
