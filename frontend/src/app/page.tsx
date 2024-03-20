@@ -274,13 +274,13 @@ export default function Home() {
 			palette: {
 				mode: "dark",
 				primary: {
-					main: "#90caf9" // Azul claro
+					main: "#90caf9" 
 				},
 				secondary: {
-					main: "#f48fb1" // Rosa claro
+					main: "#f48fb1" 
 				},
 				text: {
-					primary: "#fff" // Cor do texto principal (branco)
+					primary: "#fff" 
 				}
 			}
 	});
