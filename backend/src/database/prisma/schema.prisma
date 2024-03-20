@@ -1,0 +1,33 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://vogelsbet_owner:s24YIxeXzoCO@ep-restless-poetry-a4t03b3w.us-east-1.aws.neon.tech/vogelsbet?sslmode=require"
+}
+
+model BetEdition {
+  id_e      String   @id @default(uuid())
+  name      String
+  finish    Boolean  @default(false)
+  value     String
+  numbersDrawn   Int[]
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  Bets      Bet[]
+}
+
+model Bet {
+  id_e          String     @id @default(uuid())
+  register      Int        
+  name          String     
+  cpf           String
+  numbers       Int[]
+  BetEdition_id String
+  BetEdition    BetEdition @relation(fields: [BetEdition_id], references: [id_e])
+  createdAt     DateTime   @default(now())
+
+  @@map("bet")
+}
